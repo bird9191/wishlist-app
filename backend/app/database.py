@@ -10,7 +10,10 @@ load_dotenv()
 
 # Railway передаёт DATABASE_URL через environment variables
 DATABASE_URL = os.getenv("DATABASE_URL")
+print(f"🔍 DATABASE_URL loaded: {DATABASE_URL[:50] if DATABASE_URL else 'NOT SET'}...")
 if not DATABASE_URL:
+    print("❌ ERROR: DATABASE_URL environment variable is not set!")
+    print(f"Available env vars: {list(os.environ.keys())[:10]}")
     raise ValueError("DATABASE_URL environment variable is not set!")
 
 # SQLite требует check_same_thread=False для FastAPI
