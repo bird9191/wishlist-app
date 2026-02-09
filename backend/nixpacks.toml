@@ -1,5 +1,6 @@
 [phases.setup]
-aptPkgs = ["libpq-dev", "gcc", "libjpeg-dev", "zlib1g-dev"]
+aptPkgs = ["libpq-dev", "gcc", "libjpeg-dev", "zlib1g-dev", "curl"]
+nixPkgs = ["rust", "cargo"]
 
 [phases.install]
 cmds = ["pip install -r requirements.txt"]
