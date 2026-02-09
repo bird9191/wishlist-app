@@ -4,9 +4,14 @@ from sqlalchemy.orm import sessionmaker
 import os
 from dotenv import load_dotenv
 
+# Load .env только для локальной разработки
+# В production (Railway) переменные приходят напрямую
 load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://wishlist_user:wishlist_password@localhost:5432/wishlist_db")
+# Railway передаёт DATABASE_URL через environment variables
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable is not set!")
 
 # SQLite требует check_same_thread=False для FastAPI
 # PostgreSQL не требует дополнительных connect_args
