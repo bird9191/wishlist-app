@@ -8,6 +8,9 @@ import { toast } from 'react-toastify'
 import { wishlistAPI, Wishlist, WishlistItem } from '@/lib/wishlistAPI'
 import { useWebSocket } from '@/hooks/useWebSocket'
 
+// Для Cloudflare Pages - разрешить динамические параметры
+export const dynamicParams = true
+
 export default function PublicWishlistPage() {
   const params = useParams()
   const slug = params.slug as string

@@ -9,6 +9,9 @@ import { wishlistAPI, URLMetadata } from '@/lib/wishlistAPI'
 import { FaGift, FaPlus, FaTrash, FaArrowLeft, FaSave, FaMagic, FaSpinner, FaUsers } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 
+// Для Cloudflare Pages - разрешить динамические параметры
+export const dynamicParams = true
+
 interface WishlistItem {
   id: number
   title: string
