@@ -224,7 +224,7 @@ export default function PublicWishlistPage() {
             {wishlist.items.map((item) => {
               const priority = getPriorityLabel(item.priority)
               const progressPercentage = getProgressPercentage(item)
-              const isFullyFunded = item.is_pooling && item.price && item.total_contributed && item.total_contributed >= item.price
+              const isFullyFunded = !!(item.is_pooling && item.price && item.total_contributed && item.total_contributed >= item.price)
               
               return (
                 <div
