@@ -190,3 +190,4 @@ WishlistItem (id, title, price, is_pooling, is_reserved)
 ---
 
 **Сделано с ❤️ и Cursor AI**
+
