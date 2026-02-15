@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, status, WebSocket, WebSocketDisconnect, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict
 from decimal import Decimal
@@ -92,8 +92,9 @@ def update_item(
 
 
 @router.delete("/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_item(
+async def delete_item(
     item_id: int,
+    background_tasks: BackgroundTasks,
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
@@ -120,13 +121,30 @@ def delete_item(
             detail="Not authorized to delete this item"
         )
     
+    # Проверка на вклады - если есть вклады, нельзя просто удалить
+    if item.contributions:
+        total_contributed = sum(c.amount for c in item.contributions)
+        if total_contributed > 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Cannot delete item with {len(item.contributions)} contributions totaling {total_contributed}. Please handle contributions first."
+            )
+    
     wishlist_id = item.wishlist_id
     
     db.delete(item)
     db.commit()
     
-    # WebSocket broadcast будет работать через фоновую задачу
-    # Для синхронной функции не вызываем async broadcast
+    # WebSocket broadcast через background task
+    background_tasks.add_task(
+        manager.broadcast,
+        wishlist_id,
+        {
+            "type": "item_deleted",
+            "item_id": item_id,
+            "wishlist_id": wishlist_id
+        }
+    )
     
     return None
 
@@ -207,9 +225,10 @@ async def reserve_item(
 @router.delete("/{item_id}/reserve", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_reservation(
     item_id: int,
+    reservation_email: str,
     db: Session = Depends(get_db)
 ):
-    """Отменить резервацию"""
+    """Отменить резервацию (требуется email того кто зарезервировал)"""
     item = db.query(models.WishlistItem).filter(
         models.WishlistItem.id == item_id
     ).first()
@@ -220,12 +239,28 @@ async def cancel_reservation(
             detail="Item not found"
         )
     
-    # Удалить все резервации
-    db.query(models.Reservation).filter(
-        models.Reservation.item_id == item_id
-    ).delete()
+    # Найти резервацию с указанным email
+    reservation = db.query(models.Reservation).filter(
+        models.Reservation.item_id == item_id,
+        models.Reservation.reserver_email == reservation_email
+    ).first()
     
-    item.is_reserved = False
+    if not reservation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Reservation not found or email doesn't match"
+        )
+    
+    # Удалить резервацию
+    db.delete(reservation)
+    
+    # Проверить, остались ли другие резервации
+    remaining_reservations = db.query(models.Reservation).filter(
+        models.Reservation.item_id == item_id
+    ).count()
+    
+    if remaining_reservations == 0:
+        item.is_reserved = False
     
     db.commit()
     
@@ -238,10 +273,10 @@ async def cancel_reservation(
         return None  # Вишлист был удалён
     
     await manager.broadcast(wishlist.id, {
-        "type": "reservation_cancel",
+        "type": "reservation_cancelled",
         "wishlist_id": wishlist.id,
         "item_id": item_id,
-        "data": {"is_reserved": False}
+        "data": {"is_reserved": item.is_reserved}
     })
     
     return None
