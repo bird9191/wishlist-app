@@ -225,7 +225,7 @@ async def reserve_item(
 @router.delete("/{item_id}/reserve", status_code=status.HTTP_204_NO_CONTENT)
 async def cancel_reservation(
     item_id: int,
-    reservation_email: str,
+    cancel_data: schemas.ReservationCancel,
     db: Session = Depends(get_db)
 ):
     """Отменить резервацию (требуется email того кто зарезервировал)"""
@@ -242,7 +242,7 @@ async def cancel_reservation(
     # Найти резервацию с указанным email
     reservation = db.query(models.Reservation).filter(
         models.Reservation.item_id == item_id,
-        models.Reservation.reserver_email == reservation_email
+        models.Reservation.reserver_email == cancel_data.reserver_email
     ).first()
     
     if not reservation:

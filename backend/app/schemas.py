@@ -73,6 +73,10 @@ class ReservationCreate(ReservationBase):
     pass
 
 
+class ReservationCancel(BaseModel):
+    reserver_email: EmailStr
+
+
 class Reservation(ReservationBase):
     id: int
     item_id: int
