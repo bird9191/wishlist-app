@@ -86,9 +86,11 @@ export const wishlistAPI = {
   },
 
   // Отмена резервирования
-  async cancelReservation(itemId: number): Promise<void> {
+  async cancelReservation(itemId: number, reserver_email: string): Promise<void> {
     try {
-      await api.delete(`/api/items/${itemId}/reserve`)
+      await api.delete(`/api/items/${itemId}/reserve`, {
+        data: { reserver_email }
+      })
       toast.success('Резервирование отменено')
     } catch (error: any) {
       const message = error.response?.data?.detail || 'Ошибка отмены'
