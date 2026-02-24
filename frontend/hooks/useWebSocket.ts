@@ -13,7 +13,6 @@ export const useWebSocket = (wishlistId: number | null, onMessage: (message: WSM
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null)
   const onMessageRef = useRef(onMessage)
   
-  // Обновляем ref при изменении callback
   useEffect(() => {
     onMessageRef.current = onMessage
   }, [onMessage])
@@ -34,7 +33,6 @@ export const useWebSocket = (wishlistId: number | null, onMessage: (message: WSM
         ws.current = new WebSocket(wsUrl)
 
         ws.current.onopen = () => {
-          console.log('WebSocket connected')
           setIsConnected(true)
         }
 
@@ -52,13 +50,10 @@ export const useWebSocket = (wishlistId: number | null, onMessage: (message: WSM
         }
 
         ws.current.onclose = () => {
-          console.log('WebSocket disconnected')
           setIsConnected(false)
           
-          // Попытка переподключения через 3 секунды, только если компонент смонтирован
           if (isMounted) {
             reconnectTimeout.current = setTimeout(() => {
-              console.log('Attempting to reconnect...')
               connect()
             }, 3000)
           }
@@ -79,7 +74,7 @@ export const useWebSocket = (wishlistId: number | null, onMessage: (message: WSM
         ws.current.close()
       }
     }
-  }, [wishlistId]) // Только wishlistId в dependencies
+  }, [wishlistId])
 
   return { isConnected }
 }

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuthStore } from '@/store/authStore'
 import api from '@/lib/api'
-import { FaGift, FaPlus, FaShare, FaEdit, FaTrash, FaSignOutAlt, FaLock, FaUsers, FaCheckCircle } from 'react-icons/fa'
+import { FaGift, FaPlus, FaShare, FaEdit, FaTrash, FaSignOutAlt, FaLock, FaUsers } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 
 interface WishlistItem {
@@ -100,10 +100,14 @@ export default function DashboardPage() {
     }
   }
 
-  const copyPublicLink = (slug: string) => {
+  const copyPublicLink = async (slug: string) => {
     const url = `${window.location.origin}/wishlist/${slug}`
-    navigator.clipboard.writeText(url)
-    toast.success('Ссылка скопирована!')
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Ссылка скопирована!')
+    } catch {
+      toast.error('Не удалось скопировать ссылку')
+    }
   }
 
   const handleLogout = () => {
@@ -197,7 +201,6 @@ export default function DashboardPage() {
                     </p>
                   )}
                   
-                  {/* Статистика */}
                   <div className="space-y-2 mb-4">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">Всего товаров:</span>
@@ -225,7 +228,6 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  {/* Детали по товарам с коллективными сборами */}
                   {wishlist.items.some(item => item.is_pooling && item.total_contributed !== undefined) && (
                     <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-200">
                       <p className="text-xs font-semibold text-purple-900 mb-2">Сборы:</p>
@@ -243,7 +245,6 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* Подсказка о секретности */}
                   {stats.reserved > 0 && (
                     <div className="mb-4 p-2 bg-green-50 rounded-lg border border-green-200">
                       <p className="text-xs text-green-700">

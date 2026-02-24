@@ -10,10 +10,19 @@ router = APIRouter(prefix="/api/wishlists", tags=["wishlists"])
 
 
 def calculate_total_contributed(item: models.WishlistItem) -> Optional[Decimal]:
-    """Подсчитать сумму вкладов"""
     if not item.is_pooling or not item.contributions:
         return None
     return sum([c.amount for c in item.contributions])
+
+
+def enrich_wishlist(wishlist) -> dict:
+    wishlist_dict = wishlist.__dict__.copy()
+    wishlist_dict['items'] = []
+    for item in wishlist.items:
+        item_dict = item.__dict__.copy()
+        item_dict['total_contributed'] = calculate_total_contributed(item)
+        wishlist_dict['items'].append(item_dict)
+    return wishlist_dict
 
 
 @router.get("", response_model=List[schemas.WishlistOwner])
@@ -21,21 +30,13 @@ def get_user_wishlists(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Получить все вишлисты текущего пользователя (владельца)"""
     wishlists = db.query(models.Wishlist).filter(
         models.Wishlist.owner_id == current_user.id
     ).all()
     
-    # Добавить total_contributed для каждого item
     result = []
     for wishlist in wishlists:
-        wishlist_dict = wishlist.__dict__.copy()
-        wishlist_dict['items'] = []
-        for item in wishlist.items:
-            item_dict = item.__dict__.copy()
-            item_dict['total_contributed'] = calculate_total_contributed(item)
-            wishlist_dict['items'].append(item_dict)
-        result.append(wishlist_dict)
+        result.append(enrich_wishlist(wishlist))
     
     return result
 
@@ -46,16 +47,13 @@ def create_wishlist(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Создать новый вишлист"""
-    # Генерация уникального slug
     slug = models.Wishlist.generate_slug()
     
-    # Проверка уникальности slug (на всякий случай)
     while db.query(models.Wishlist).filter(models.Wishlist.slug == slug).first():
         slug = models.Wishlist.generate_slug()
     
     db_wishlist = models.Wishlist(
-        **wishlist.model_dump(),
+        **wishlist.dict(),
         slug=slug,
         owner_id=current_user.id
     )
@@ -71,7 +69,6 @@ def get_wishlist(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Получить вишлист по ID"""
     wishlist = db.query(models.Wishlist).filter(
         models.Wishlist.id == wishlist_id,
         models.Wishlist.owner_id == current_user.id
@@ -83,7 +80,7 @@ def get_wishlist(
             detail="Wishlist not found"
         )
     
-    return wishlist
+    return enrich_wishlist(wishlist)
 
 
 @router.put("/{wishlist_id}", response_model=schemas.WishlistOwner)
@@ -93,7 +90,6 @@ def update_wishlist(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Обновить вишлист"""
     wishlist = db.query(models.Wishlist).filter(
         models.Wishlist.id == wishlist_id,
         models.Wishlist.owner_id == current_user.id
@@ -105,14 +101,13 @@ def update_wishlist(
             detail="Wishlist not found"
         )
     
-    # Обновление полей
-    update_data = wishlist_update.model_dump(exclude_unset=True)
+    update_data = wishlist_update.dict(exclude_unset=True)
     for field, value in update_data.items():
         setattr(wishlist, field, value)
     
     db.commit()
     db.refresh(wishlist)
-    return wishlist
+    return enrich_wishlist(wishlist)
 
 
 @router.delete("/{wishlist_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -121,7 +116,6 @@ def delete_wishlist(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Удалить вишлист"""
     wishlist = db.query(models.Wishlist).filter(
         models.Wishlist.id == wishlist_id,
         models.Wishlist.owner_id == current_user.id
@@ -140,7 +134,6 @@ def delete_wishlist(
 
 @router.get("/public/{slug}", response_model=schemas.WishlistGuest)
 def get_public_wishlist(slug: str, db: Session = Depends(get_db)):
-    """Получить публичный вишлист по slug (гостевой доступ)"""
     wishlist = db.query(models.Wishlist).filter(
         models.Wishlist.slug == slug,
         models.Wishlist.is_public == True
@@ -152,7 +145,6 @@ def get_public_wishlist(slug: str, db: Session = Depends(get_db)):
             detail="Wishlist not found or not public"
         )
     
-    # Добавить total_contributed для каждого item
     wishlist_dict = wishlist.__dict__.copy()
     wishlist_dict['items'] = []
     for item in wishlist.items:
@@ -172,8 +164,6 @@ def add_wishlist_item(
     current_user: models.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """Добавить товар в вишлист"""
-    # Проверка существования и принадлежности вишлиста
     wishlist = db.query(models.Wishlist).filter(
         models.Wishlist.id == wishlist_id,
         models.Wishlist.owner_id == current_user.id
@@ -186,7 +176,7 @@ def add_wishlist_item(
         )
     
     db_item = models.WishlistItem(
-        **item.model_dump(),
+        **item.dict(),
         wishlist_id=wishlist_id
     )
     db.add(db_item)

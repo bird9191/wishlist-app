@@ -54,15 +54,22 @@ class _WishlistAppState extends State<WishlistApp> {
   }
 
   Future<void> _refreshUser() async {
-    final user = await _authService.me();
-    if (mounted) setState(() => _user = user);
+    try {
+      final user = await _authService.me();
+      if (mounted) setState(() => _user = user);
+    } catch (_) {
+      await _storage.clearToken();
+    }
   }
 
-  void _logout() {
-    setState(() {
-      _user = null;
-      _registerMode = false;
-    });
+  Future<void> _logout() async {
+    await _authService.logout();
+    if (mounted) {
+      setState(() {
+        _user = null;
+        _registerMode = false;
+      });
+    }
   }
 
   @override

@@ -8,9 +8,6 @@ import { toast } from 'react-toastify'
 import { wishlistAPI, Wishlist, WishlistItem } from '@/lib/wishlistAPI'
 import { useWebSocket } from '@/hooks/useWebSocket'
 
-// Для Cloudflare Pages - разрешить динамические параметры
-export const dynamicParams = true
-
 export default function PublicWishlistPage() {
   const params = useParams()
   const slug = params.slug as string
@@ -21,13 +18,11 @@ export default function PublicWishlistPage() {
   const [showReserveModal, setShowReserveModal] = useState(false)
   const [showContributeModal, setShowContributeModal] = useState(false)
   
-  // Форма резервирования
   const [reserverName, setReserverName] = useState('')
   const [reserverEmail, setReserverEmail] = useState('')
   const [reserveMessage, setReserveMessage] = useState('')
   const [reserving, setReserving] = useState(false)
   
-  // Форма вклада
   const [contributorName, setContributorName] = useState('')
   const [contributorEmail, setContributorEmail] = useState('')
   const [contributionAmount, setContributionAmount] = useState('')
@@ -49,16 +44,9 @@ export default function PublicWishlistPage() {
     }
   }
 
-  // WebSocket для real-time обновлений
   const handleWSMessage = (message: any) => {
-    console.log('WebSocket message:', message)
-    
-    if (message.type === 'reservation' || message.type === 'contribution') {
-      // Обновить только затронутый item
-      loadWishlist()
-    } else if (message.type === 'reservation_cancel') {
-      loadWishlist()
-    } else if (message.type === 'item_delete') {
+    if (message.type === 'reservation' || message.type === 'contribution' ||
+        message.type === 'reservation_cancelled' || message.type === 'item_deleted') {
       loadWishlist()
     }
   }
@@ -113,8 +101,9 @@ export default function PublicWishlistPage() {
       return
     }
 
-    if (selectedItem.price && selectedItem.total_contributed) {
-      const remaining = selectedItem.price - selectedItem.total_contributed
+    if (selectedItem.price != null) {
+      const contributed = selectedItem.total_contributed || 0
+      const remaining = selectedItem.price - contributed
       if (amount > remaining) {
         toast.error(`Максимальная сумма: ${remaining} ${selectedItem.currency}`)
         return
@@ -261,7 +250,6 @@ export default function PublicWishlistPage() {
                     </p>
                   )}
 
-                  {/* Коллективные сборы */}
                   {item.is_pooling && item.price && (
                     <div className="mb-4">
                       <div className="flex justify-between text-sm text-gray-600 mb-1">
@@ -290,7 +278,6 @@ export default function PublicWishlistPage() {
                     </div>
                   )}
 
-                  {/* Статус резервирования */}
                   {item.is_reserved && !item.is_pooling && (
                     <div className="mb-3 p-2 bg-green-50 border border-green-200 rounded-lg flex items-center">
                       <FaLock className="text-green-600 mr-2" />
@@ -300,7 +287,6 @@ export default function PublicWishlistPage() {
                     </div>
                   )}
 
-                  {/* Действия */}
                   <div className="flex space-x-2">
                     {item.url && (
                       <a
@@ -314,7 +300,6 @@ export default function PublicWishlistPage() {
                       </a>
                     )}
 
-                    {/* Кнопка резервирования или вклада */}
                     {item.is_pooling ? (
                       <button
                         onClick={() => handleContribute(item)}
@@ -344,7 +329,6 @@ export default function PublicWishlistPage() {
                     )}
                   </div>
 
-                  {/* Показать участников для коллективных сборов */}
                   {item.is_pooling && item.contributions && item.contributions.length > 0 && (
                     <div className="mt-4 p-3 bg-purple-50 rounded-lg">
                       <p className="text-sm font-semibold text-purple-900 mb-2">Участники:</p>
@@ -367,7 +351,6 @@ export default function PublicWishlistPage() {
         )}
       </main>
 
-      {/* Модалка резервирования */}
       {showReserveModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
@@ -447,7 +430,6 @@ export default function PublicWishlistPage() {
         </div>
       )}
 
-      {/* Модалка вклада */}
       {showContributeModal && selectedItem && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">

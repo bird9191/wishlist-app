@@ -1,3 +1,4 @@
+from typing import Optional, Tuple
 from fastapi import APIRouter, HTTPException
 from pydantic import HttpUrl
 import httpx
@@ -10,27 +11,22 @@ from .. import schemas
 router = APIRouter(prefix="/api/url", tags=["url"])
 
 
-async def parse_price(price_text: str) -> tuple[Decimal | None, str]:
-    """Парсинг цены из текста"""
-    # Удалить все кроме цифр, точек, запятых
+async def parse_price(price_text: str) -> Tuple[Optional[Decimal], str]:
     cleaned = re.sub(r'[^\d.,]', '', price_text)
     
     if not cleaned:
         return None, "RUB"
     
-    # Заменить запятую на точку
     cleaned = cleaned.replace(',', '.')
     
-    # Удалить лишние точки (оставить только одну для decimal)
+    # If multiple dots, treat the last one as the decimal separator
     parts = cleaned.split('.')
     if len(parts) > 2:
-        # Если больше одной точки, оставляем последнюю как decimal separator
         cleaned = ''.join(parts[:-1]) + '.' + parts[-1]
     
     try:
         price = Decimal(cleaned)
         
-        # Определить валюту
         currency = "RUB"
         if "$" in price_text or "usd" in price_text.lower():
             currency = "USD"
@@ -40,14 +36,12 @@ async def parse_price(price_text: str) -> tuple[Decimal | None, str]:
             currency = "RUB"
         
         return price, currency
-    except Exception as e:
-        print(f"Error parsing price '{price_text}': {e}")
+    except Exception:
         return None, "RUB"
 
 
 @router.post("/parse", response_model=schemas.URLMetadata)
 async def parse_url(url: HttpUrl):
-    """Парсинг URL для автозаполнения данных о товаре"""
     try:
         async with httpx.AsyncClient(timeout=10.0, follow_redirects=True) as client:
             response = await client.get(
@@ -70,7 +64,7 @@ async def parse_url(url: HttpUrl):
                 "currency": None
             }
             
-            # Open Graph теги (приоритет)
+            # Open Graph tags (highest priority)
             og_title = soup.find("meta", property="og:title")
             if og_title:
                 metadata["title"] = og_title.get("content")
@@ -83,7 +77,6 @@ async def parse_url(url: HttpUrl):
             if og_image:
                 metadata["image_url"] = og_image.get("content")
             
-            # Цена из Open Graph
             og_price = soup.find("meta", property="og:price:amount")
             og_currency = soup.find("meta", property="og:price:currency")
             if og_price:
@@ -91,7 +84,7 @@ async def parse_url(url: HttpUrl):
                 if og_currency:
                     metadata["currency"] = og_currency.get("content")
             
-            # Fallback на обычные мета-теги
+            # Fallback to standard meta tags
             if not metadata["title"]:
                 title_tag = soup.find("title")
                 if title_tag:
@@ -102,9 +95,7 @@ async def parse_url(url: HttpUrl):
                 if desc_meta:
                     metadata["description"] = desc_meta.get("content")
             
-            # Попытка найти цену в тексте страницы
             if not metadata["price"]:
-                # Ищем по паттернам цен
                 price_patterns = [
                     r'(?:цена|price)[:\s]*([0-9\s,.]+)\s*(?:₽|руб|rub|\$|usd|€|eur)',
                     r'([0-9\s,.]+)\s*(?:₽|руб|rub|\$|usd|€|eur)',
@@ -120,7 +111,7 @@ async def parse_url(url: HttpUrl):
                             metadata["currency"] = currency
                             break
             
-            # Специфичный парсинг для популярных магазинов
+            # Store-specific parsing
             url_lower = str(url).lower()
             
             # Ozon
@@ -141,7 +132,7 @@ async def parse_url(url: HttpUrl):
                         metadata["price"] = str(price)
                         metadata["currency"] = currency
             
-            # Яндекс.Маркет
+            # Yandex Market
             elif "market.yandex.ru" in url_lower:
                 price_elem = soup.find("span", {"data-auto": "snippet-price-current"})
                 if price_elem:
@@ -163,5 +154,5 @@ async def parse_url(url: HttpUrl):
             
     except httpx.TimeoutException:
         raise HTTPException(status_code=408, detail="Request timeout")
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error parsing URL: {str(e)}")
+    except Exception:
+        raise HTTPException(status_code=400, detail="Error parsing URL")

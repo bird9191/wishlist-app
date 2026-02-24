@@ -15,7 +15,6 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS настройки
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 app.add_middleware(
     CORSMiddleware,
@@ -31,22 +30,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Создание директории для загрузок
 UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-# Подключение статических файлов
 try:
     app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 except RuntimeError:
-    pass  # Директория уже подключена
+    pass
 
-# Инициализация БД при запуске
 @app.on_event("startup")
 def on_startup():
     init_db()
 
-# Подключение роутов
 app.include_router(auth.router)
 app.include_router(wishlists.router)
 app.include_router(items.router)
@@ -54,7 +49,6 @@ app.include_router(url_parser.router)
 
 @app.get("/")
 def root():
-    """Корневой эндпоинт"""
     return {
         "message": "Wishlist API",
         "docs": "/docs",
@@ -64,5 +58,4 @@ def root():
 
 @app.get("/health")
 def health_check():
-    """Проверка здоровья сервиса"""
     return {"status": "healthy"}

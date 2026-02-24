@@ -1,6 +1,6 @@
 class AppConfig {
   static const String apiBaseUrl =
-      'https://wishlist-app-production-7db1.up.railway.app';
+      'http://localhost:8000';
 
   static String wsBaseUrl() {
     if (apiBaseUrl.startsWith('https://')) {

@@ -1,67 +1,41 @@
-# Wishlist Backend API
+Wishlist Backend
 
 FastAPI бэкенд для приложения вишлистов.
 
-## Установка
+Установка и запуск
 
-```bash
-# Создать виртуальное окружение
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
+  pip install -r requirements.txt
+  cp .env.example .env
+  uvicorn app.main:app --reload --port 8000
 
-# Установить зависимости
-pip install -r requirements.txt
+После запуска документация доступна по адресам localhost:8000/docs (Swagger) и localhost:8000/redoc.
 
-# Настроить переменные окружения
-cp .env.example .env
-# Отредактируйте .env файл
-```
+Переменные окружения задаются в .env: DATABASE_URL для подключения к PostgreSQL, SECRET_KEY для JWT.
 
-## Запуск
+Эндпоинты
 
-```bash
-# Разработка
-uvicorn app.main:app --reload
+Авторизация:
+  POST /api/auth/register
+  POST /api/auth/login
+  POST /api/auth/login/json
+  GET  /api/auth/me
 
-# Продакшн
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+Вишлисты:
+  GET    /api/wishlists
+  POST   /api/wishlists
+  GET    /api/wishlists/{id}
+  PUT    /api/wishlists/{id}
+  DELETE /api/wishlists/{id}
+  GET    /api/wishlists/public/{slug}
 
-## API Документация
+Товары:
+  POST   /api/wishlists/{id}/items
+  PUT    /api/items/{id}
+  DELETE /api/items/{id}
+  POST   /api/items/{id}/reserve
+  DELETE /api/items/{id}/reserve
+  POST   /api/items/{id}/contribute
 
-После запуска сервера:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Миграции базы данных
-
-```bash
-# Создать миграцию
-alembic revision --autogenerate -m "описание"
-
-# Применить миграции
-alembic upgrade head
-```
-
-## Эндпоинты
-
-### Авторизация
-- `POST /api/auth/register` - Регистрация
-- `POST /api/auth/login` - Вход
-- `GET /api/auth/me` - Текущий пользователь
-- `GET /api/auth/google` - OAuth Google
-- `GET /api/auth/github` - OAuth GitHub
-
-### Вишлисты
-- `GET /api/wishlists` - Список вишлистов пользователя
-- `POST /api/wishlists` - Создать вишлист
-- `GET /api/wishlists/{id}` - Получить вишлист
-- `PUT /api/wishlists/{id}` - Обновить вишлист
-- `DELETE /api/wishlists/{id}` - Удалить вишлист
-- `GET /api/wishlists/public/{slug}` - Публичный вишлист
-
-### Товары
-- `POST /api/wishlists/{id}/items` - Добавить товар
-- `PUT /api/items/{id}` - Обновить товар
-- `DELETE /api/items/{id}` - Удалить товар
-- `POST /api/items/{id}/mark` - Отметить как купленный
+Прочее:
+  POST /api/url/parse
+  WS   /api/items/ws/{wishlist_id}

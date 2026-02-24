@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Float, Numeric
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Text, Numeric
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from .database import Base
@@ -11,7 +11,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     username = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=True)  # Nullable для OAuth пользователей
+    hashed_password = Column(String, nullable=True)  # nullable for OAuth users
     is_active = Column(Boolean, default=True)
     oauth_provider = Column(String, nullable=True)  # google, github, etc.
     oauth_id = Column(String, nullable=True)
@@ -29,7 +29,7 @@ class Wishlist(Base):
     description = Column(Text, nullable=True)
     slug = Column(String, unique=True, index=True, nullable=False)
     is_public = Column(Boolean, default=True)
-    event_date = Column(DateTime(timezone=True), nullable=True)  # Дата события (для контроля сборов)
+    event_date = Column(DateTime(timezone=True), nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -39,7 +39,6 @@ class Wishlist(Base):
 
     @staticmethod
     def generate_slug():
-        """Генерирует уникальный slug для публичной ссылки"""
         return secrets.token_urlsafe(8)
 
 
@@ -51,11 +50,11 @@ class WishlistItem(Base):
     description = Column(Text, nullable=True)
     url = Column(String, nullable=True)
     image_url = Column(String, nullable=True)
-    price = Column(Numeric(10, 2), nullable=True)  # Decimal для точности
+    price = Column(Numeric(10, 2), nullable=True)
     currency = Column(String, default="RUB")
-    priority = Column(Integer, default=0)  # 0-низкий, 1-средний, 2-высокий
-    is_reserved = Column(Boolean, default=False)  # Зарезервирован ли товар
-    is_pooling = Column(Boolean, default=False)  # Можно ли скидываться
+    priority = Column(Integer, default=0)  # 0=low, 1=medium, 2=high
+    is_reserved = Column(Boolean, default=False)
+    is_pooling = Column(Boolean, default=False)  # allows group contributions
     wishlist_id = Column(Integer, ForeignKey("wishlists.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -66,29 +65,28 @@ class WishlistItem(Base):
 
 
 class Reservation(Base):
-    """Резервирование подарка (скрыто от владельца вишлиста)"""
+    """Hidden from wishlist owner to preserve gift surprise."""
     __tablename__ = "reservations"
 
     id = Column(Integer, primary_key=True, index=True)
     item_id = Column(Integer, ForeignKey("wishlist_items.id"), nullable=False)
-    reserver_name = Column(String, nullable=False)  # Имя того кто зарезервировал
-    reserver_email = Column(String, nullable=True)  # Email для уведомлений (опционально)
-    message = Column(Text, nullable=True)  # Сообщение для других участников
+    reserver_name = Column(String, nullable=False)
+    reserver_email = Column(String, nullable=True)
+    message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     item = relationship("WishlistItem", back_populates="reservations")
 
 
 class Contribution(Base):
-    """Вклад в коллективный подарок"""
     __tablename__ = "contributions"
 
     id = Column(Integer, primary_key=True, index=True)
     item_id = Column(Integer, ForeignKey("wishlist_items.id"), nullable=False)
-    contributor_name = Column(String, nullable=False)  # Имя того кто скинулся
-    contributor_email = Column(String, nullable=True)  # Email для уведомлений
-    amount = Column(Numeric(10, 2), nullable=False)  # Сумма вклада
-    message = Column(Text, nullable=True)  # Сообщение для других участников
+    contributor_name = Column(String, nullable=False)
+    contributor_email = Column(String, nullable=True)
+    amount = Column(Numeric(10, 2), nullable=False)
+    message = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     item = relationship("WishlistItem", back_populates="contributions")

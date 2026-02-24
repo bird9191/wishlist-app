@@ -34,11 +34,26 @@ class _WishlistDetailScreenState extends State<WishlistDetailScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _url.dispose();
+    _itemTitle.dispose();
+    _desc.dispose();
+    _price.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       _wishlist = await widget.wishlistService.getWishlist(widget.wishlistId);
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки: $e')),
+        );
+      }
+    }
     if (mounted) setState(() => _loading = false);
   }
 

@@ -22,17 +22,14 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login", auto_error=False
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Проверка пароля"""
     return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_password_hash(password: str) -> str:
-    """Хеширование пароля"""
     return pwd_context.hash(password)
 
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
-    """Создание JWT токена"""
     to_encode = data.copy()
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
@@ -45,21 +42,18 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
 
 
 def get_user_by_email(db: Session, email: str):
-    """Получить пользователя по email"""
     return db.query(models.User).filter(models.User.email == email).first()
 
 
 def get_user_by_username(db: Session, username: str):
-    """Получить пользователя по username"""
     return db.query(models.User).filter(models.User.username == username).first()
 
 
 def authenticate_user(db: Session, email: str, password: str):
-    """Аутентификация пользователя"""
     user = get_user_by_email(db, email)
     if not user:
         return False
-    if not user.hashed_password:  # OAuth пользователь
+    if not user.hashed_password:  # OAuth user has no password
         return False
     if not verify_password(password, user.hashed_password):
         return False
@@ -67,7 +61,6 @@ def authenticate_user(db: Session, email: str, password: str):
 
 
 def create_user(db: Session, user: schemas.UserCreate):
-    """Создание нового пользователя"""
     hashed_password = get_password_hash(user.password)
     db_user = models.User(
         email=user.email,
@@ -81,7 +74,6 @@ def create_user(db: Session, user: schemas.UserCreate):
 
 
 def create_oauth_user(db: Session, email: str, username: str, oauth_provider: str, oauth_id: str, avatar_url: Optional[str] = None):
-    """Создание пользователя через OAuth"""
     db_user = models.User(
         email=email,
         username=username,
@@ -99,7 +91,6 @@ async def get_current_user(
     token: Optional[str] = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
-    """Получить текущего пользователя из токена"""
     if not token:
         return None
     
@@ -128,7 +119,6 @@ async def get_current_user(
 async def get_current_active_user(
     current_user: models.User = Depends(get_current_user)
 ):
-    """Получить текущего активного пользователя"""
     if not current_user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

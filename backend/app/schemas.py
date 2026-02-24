@@ -4,7 +4,6 @@ from datetime import datetime
 from decimal import Decimal
 
 
-# User schemas
 class UserBase(BaseModel):
     email: EmailStr
     username: str
@@ -27,10 +26,9 @@ class User(UserBase):
     oauth_provider: Optional[str] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# Token schemas
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -41,7 +39,6 @@ class TokenData(BaseModel):
     email: Optional[str] = None
 
 
-# Contribution schemas
 class ContributionBase(BaseModel):
     contributor_name: str = Field(..., min_length=1)
     contributor_email: Optional[EmailStr] = None
@@ -59,10 +56,9 @@ class Contribution(ContributionBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# Reservation schemas
 class ReservationBase(BaseModel):
     reserver_name: str = Field(..., min_length=1)
     reserver_email: Optional[EmailStr] = None
@@ -83,10 +79,9 @@ class Reservation(ReservationBase):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# WishlistItem schemas
 class WishlistItemBase(BaseModel):
     title: str = Field(..., min_length=1)
     description: Optional[str] = None
@@ -95,7 +90,7 @@ class WishlistItemBase(BaseModel):
     price: Optional[Decimal] = Field(None, gt=0)
     currency: str = "RUB"
     priority: int = Field(default=0, ge=0, le=2)
-    is_pooling: bool = False  # Разрешить коллективные сборы
+    is_pooling: bool = False
 
 
 class WishlistItemCreate(WishlistItemBase):
@@ -113,21 +108,20 @@ class WishlistItemUpdate(BaseModel):
     is_pooling: Optional[bool] = None
 
 
-# Для владельца вишлиста - без резерваций и вкладов
+# Owner view: only sees reservation status, not who reserved
 class WishlistItemOwner(WishlistItemBase):
     id: int
     is_reserved: bool
     wishlist_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
-    # Владелец видит только факт резервирования, но не детали
-    total_contributed: Optional[Decimal] = None  # Сколько собрано (только для pooling)
+    total_contributed: Optional[Decimal] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# Для гостей - с резервациями и вкладами
+# Guest view: includes full reservation and contribution details
 class WishlistItemGuest(WishlistItemBase):
     id: int
     is_reserved: bool
@@ -139,10 +133,9 @@ class WishlistItemGuest(WishlistItemBase):
     total_contributed: Optional[Decimal] = None
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# URL metadata для автозаполнения
 class URLMetadata(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
@@ -151,7 +144,6 @@ class URLMetadata(BaseModel):
     currency: Optional[str] = None
 
 
-# Wishlist schemas
 class WishlistBase(BaseModel):
     title: str = Field(..., min_length=1)
     description: Optional[str] = None
@@ -168,7 +160,6 @@ class WishlistUpdate(BaseModel):
     is_public: Optional[bool] = None
 
 
-# Для владельца
 class WishlistOwner(WishlistBase):
     id: int
     slug: str
@@ -178,12 +169,10 @@ class WishlistOwner(WishlistBase):
     items: List[WishlistItemOwner] = []
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# Для гостей
 class WishlistGuest(BaseModel):
-    """Публичное представление вишлиста для гостей"""
     id: int
     title: str
     description: Optional[str] = None
@@ -192,10 +181,9 @@ class WishlistGuest(BaseModel):
     created_at: datetime
 
     class Config:
-        from_attributes = True
+        orm_mode = True
 
 
-# WebSocket сообщения
 class WSMessage(BaseModel):
     type: str  # reservation, contribution, item_update, item_delete
     wishlist_id: int

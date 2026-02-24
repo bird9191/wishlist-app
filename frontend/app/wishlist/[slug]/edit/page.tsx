@@ -9,9 +9,6 @@ import { wishlistAPI, URLMetadata } from '@/lib/wishlistAPI'
 import { FaGift, FaPlus, FaTrash, FaArrowLeft, FaSave, FaMagic, FaSpinner, FaUsers } from 'react-icons/fa'
 import { toast } from 'react-toastify'
 
-// Для Cloudflare Pages - разрешить динамические параметры
-export const dynamicParams = true
-
 interface WishlistItem {
   id: number
   title: string
@@ -92,7 +89,6 @@ export default function EditWishlistPage() {
     try {
       const metadata = await wishlistAPI.parseURL(newItem.url)
       
-      // Автозаполнение полей
       setNewItem({
         ...newItem,
         title: metadata.title || newItem.title,
@@ -115,7 +111,6 @@ export default function EditWishlistPage() {
     
     if (!wishlist) return
 
-    // Валидация
     if (newItem.is_pooling && !newItem.price) {
       toast.error('Для коллективного сбора укажите цену')
       return
@@ -373,7 +368,6 @@ export default function EditWishlistPage() {
               Добавить товар
             </h3>
             <form onSubmit={handleAddItem} className="space-y-4">
-              {/* URL с автозаполнением */}
               <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ✨ URL товара (для автозаполнения)
@@ -498,7 +492,6 @@ export default function EditWishlistPage() {
                 />
               </div>
 
-              {/* Коллективные сборы */}
               <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
                 <label className="flex items-center space-x-3 cursor-pointer">
                   <input

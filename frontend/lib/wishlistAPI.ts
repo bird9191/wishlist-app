@@ -57,11 +57,10 @@ export interface Wishlist {
 }
 
 export const wishlistAPI = {
-  // Парсинг URL
   async parseURL(url: string): Promise<URLMetadata> {
     try {
-      // FastAPI ожидает просто строку URL в body
-      const response = await api.post('/api/url/parse', `"${url}"`, {
+      // FastAPI expects a bare JSON string in the body
+      const response = await api.post('/api/url/parse', JSON.stringify(url), {
         headers: { 'Content-Type': 'application/json' }
       })
       return response.data
@@ -72,7 +71,6 @@ export const wishlistAPI = {
     }
   },
 
-  // Резервирование
   async reserveItem(itemId: number, data: { reserver_name: string; reserver_email?: string; message?: string }): Promise<Reservation> {
     try {
       const response = await api.post(`/api/items/${itemId}/reserve`, data)
@@ -85,7 +83,6 @@ export const wishlistAPI = {
     }
   },
 
-  // Отмена резервирования
   async cancelReservation(itemId: number, reserver_email: string): Promise<void> {
     try {
       await api.delete(`/api/items/${itemId}/reserve`, {
@@ -99,7 +96,6 @@ export const wishlistAPI = {
     }
   },
 
-  // Внести вклад
   async contributeToItem(itemId: number, data: { contributor_name: string; contributor_email?: string; amount: number; message?: string }): Promise<Contribution> {
     try {
       const response = await api.post(`/api/items/${itemId}/contribute`, data)
@@ -112,7 +108,6 @@ export const wishlistAPI = {
     }
   },
 
-  // Получить публичный вишлист
   async getPublicWishlist(slug: string): Promise<Wishlist> {
     try {
       const response = await api.get(`/api/wishlists/public/${slug}`)

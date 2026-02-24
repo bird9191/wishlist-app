@@ -39,6 +39,9 @@ class _PublicWishlistScreenState extends State<PublicWishlistScreen> {
   void dispose() {
     _ws.disconnect();
     _reconnectTimer?.cancel();
+    _name.dispose();
+    _email.dispose();
+    _message.dispose();
     for (final c in _amountByItem.values) {
       c.dispose();
     }
@@ -50,7 +53,13 @@ class _PublicWishlistScreenState extends State<PublicWishlistScreen> {
     try {
       _wishlist = await widget.wishlistService.getPublicWishlist(widget.slug);
       _connectWs();
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки: $e')),
+        );
+      }
+    }
     if (mounted) setState(() => _loading = false);
   }
 

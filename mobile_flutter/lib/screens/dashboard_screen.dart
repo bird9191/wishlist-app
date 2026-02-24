@@ -34,11 +34,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
     _load();
   }
 
+  @override
+  void dispose() {
+    _title.dispose();
+    _description.dispose();
+    _slug.dispose();
+    super.dispose();
+  }
+
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
       _wishlists = await widget.wishlistService.getMyWishlists();
-    } catch (_) {}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки: $e')),
+        );
+      }
+    }
     if (mounted) setState(() => _loading = false);
   }
 

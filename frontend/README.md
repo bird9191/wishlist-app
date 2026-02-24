@@ -1,53 +1,23 @@
-# Wishlist Frontend
+Wishlist Frontend
 
 Next.js фронтенд для приложения вишлистов.
 
-## Установка
+Установка и запуск
 
-```bash
-npm install
-# или
-yarn install
-```
+  npm install
+  npm run dev
 
-## Настройка
+Приложение будет доступно на localhost:3000.
 
-Создайте `.env.local` файл:
+Для продакшн-сборки: npm run build && npm start.
 
-```bash
-cp .env.example .env.local
-```
+Переменная NEXT_PUBLIC_API_URL в файле .env.local указывает на адрес бэкенда.
 
-Отредактируйте переменные окружения в `.env.local`.
+Страницы
 
-## Запуск
-
-```bash
-# Разработка
-npm run dev
-
-# Продакшн
-npm run build
-npm start
-```
-
-Приложение будет доступно на http://localhost:3000
-
-## Страницы
-
-- `/` - Главная страница
-- `/login` - Вход
-- `/register` - Регистрация
-- `/dashboard` - Мои вишлисты
-- `/wishlist/[slug]` - Публичный вишлист
-
-## Технологии
-
-- Next.js 14
-- React 18
-- TypeScript
-- Tailwind CSS
-- Axios
-- Zustand (state management)
-- React Toastify (notifications)
-- React Icons
+  /              главная
+  /login         вход
+  /register      регистрация
+  /dashboard     мои вишлисты
+  /wishlist/[slug]       публичный вишлист
+  /wishlist/[slug]/edit  редактирование вишлиста

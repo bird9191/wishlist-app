@@ -9,7 +9,6 @@ export const api = axios.create({
   },
 })
 
-// Interceptor для добавления токена к запросам
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -23,14 +22,12 @@ api.interceptors.request.use(
   }
 )
 
-// Interceptor для обработки ошибок
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Токен истёк или невалиден
       localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      localStorage.removeItem('auth-storage')
       if (typeof window !== 'undefined') {
         window.location.href = '/login'
       }
